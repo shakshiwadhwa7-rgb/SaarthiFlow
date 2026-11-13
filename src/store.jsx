@@ -1,31 +1,240 @@
-import React,{createContext,useContext,useEffect,useState} from 'react';
-const C=createContext();export const useApp=()=>useContext(C);
-export const uid=()=>Math.random().toString(36).slice(2,9);
-export const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-export const fmtD=d=>{if(!d)return'No date';const[,m,day]=d.split('-');return MONTHS[+m-1]+' '+ +day};
-export const iso=(y,m,d)=>`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-export const TODAY=iso(2026,10,14);
-const T=(title,project,priority,status,due)=>({id:uid(),title,project,priority,status,due});
-const seed={
-tasks:[T('Submit GSSoC application','Open Source','High','todo','2026-11-18'),T('Complete Azure AI-900 practice','Learning','Medium','done','2026-11-12'),T('Build SaarthiFlow MVP','Hackathon','High','doing','2026-11-20'),T('Paper review for agents','Research','Medium','todo','2026-11-22'),T('HackOWASP registration','Hackathon','High','todo','2026-11-17'),T('Infosys Internship Course','Internships','Low','doing','2026-11-25'),T('DBMS Phase 2 submission','College','High','todo','2026-12-02'),T('Prepare demo video','Hackathon','Medium','todo','2026-11-19')],
-proposals:[{id:uid(),title:'Analyze HackOWASP hackathon page',source:'Agent Studio',created:Date.now()-3600e3,status:'pending',tasks:[{id:uid(),title:'Register team for HackOWASP',priority:'High',due:'2026-11-17',project:'Hackathon'},{id:uid(),title:'Draft problem statement',priority:'Medium',due:'2026-11-21',project:'Hackathon'}]}],
-activity:[{id:uid(),at:Date.now()-7200e3,type:'Plan',title:'Analyzed webpage (demo)',detail:'Extracted deadlines and requirements',source:'Agent Studio',status:'Completed'}],
-settings:{name:'Riya',email:'riya@example.com',role:'Student Developer',weekStart:'Mon',notify:true,demo:true}};
-export function Store({children}){
-const[s,set]=useState(()=>{try{return{...seed,...JSON.parse(localStorage.getItem('sf-v1')||'{}')}}catch{return seed}});
-useEffect(()=>{localStorage.setItem('sf-v1',JSON.stringify(s))},[s]);
-const log=(a,type,title,detail,source,status='Completed')=>({...a,activity:[{id:uid(),at:Date.now(),type,title,detail,source,status},...a.activity]});
-const api={...s,
-addTask:t=>set(a=>log({...a,tasks:[{...t,id:uid()},...a.tasks]},'Task','Task created: '+t.title,t.project+' · due '+fmtD(t.due),'My Space')),
-updateTask:t=>set(a=>log({...a,tasks:a.tasks.map(x=>x.id===t.id?t:x)},'Task','Task updated: '+t.title,'Status: '+t.status,'My Space')),
-deleteTask:id=>set(a=>{const t=a.tasks.find(x=>x.id===id);return log({...a,tasks:a.tasks.filter(x=>x.id!==id)},'Task','Task deleted: '+t?.title,'Removed from My Space','My Space','Cancelled')}),
-toggleTask:id=>set(a=>{const t=a.tasks.find(x=>x.id===id);const d=t.status!=='done';return log({...a,tasks:a.tasks.map(x=>x.id===id?{...x,status:d?'done':'todo'}:x)},'Task',(d?'Completed: ':'Reopened: ')+t.title,'Status changed','My Space')}),
-addProposal:p=>set(a=>log({...a,proposals:[{...p,id:uid(),created:Date.now(),status:'pending'},...a.proposals]},'Plan','Plan sent for approval: '+p.title,p.tasks.length+' proposed tasks','Agent Studio','Pending')),
-decide:(id,ok,tasks)=>set(a=>{const p=a.proposals.find(x=>x.id===id);if(!p||p.status!=='pending')return a;
-const list=tasks||p.tasks;const np={...p,tasks:list,status:ok?'approved':'rejected',decidedAt:Date.now()};
-const nt=ok?list.map(t=>({...t,id:uid(),status:'todo'})):[];
-return log({...a,proposals:a.proposals.map(x=>x.id===id?np:x),tasks:[...nt,...a.tasks]},'Approval',(ok?'Approved: ':'Rejected: ')+p.title,ok?nt.length+' tasks created in My Space':'No tasks created','Approvals',ok?'Completed':'Rejected')}),
-logOnly:(type,title,detail,source)=>set(a=>log(a,type,title,detail,source)),
-saveSettings:v=>set(a=>log({...a,settings:v},'Settings','Settings saved','Preferences updated locally','Settings')),
-reset:()=>{localStorage.removeItem('sf-v1');location.reload()}};
-return <C.Provider value={api}>{children}</C.Provider>}
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { api } from './api.js';
+
+const C = createContext();
+export const useApp = () => useContext(C);
+
+export const uid = () => Math.random().toString(36).slice(2, 9);
+export const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+export const fmtD = d => {
+  if (!d) return 'No date';
+  const [, m, day] = d.split('-');
+  return MONTHS[+m - 1] + ' ' + +day;
+};
+export const iso = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+export const TODAY = iso(2026, 10, 14);
+
+export function Store({ children }) {
+  const [tasks, setTasks] = useState([]);
+  const [proposals, setProposals] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [projects, setProjects] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [settings, setSettings] = useState({
+    name: 'Riya',
+    email: 'riya@example.com',
+    role: 'Student Developer',
+    weekStart: 'Mon',
+    notify: true,
+    demo: false
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [backendConnected, setBackendConnected] = useState(false);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = useCallback((message, type = 'info') => {
+    const id = uid();
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  }, []);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  // Fetch full state from backend
+  const refresh = useCallback(async (quiet = false) => {
+    if (!quiet) setLoading(true);
+    setError(null);
+    try {
+      const [tList, pList, aList, prjList, sData, anaData] = await Promise.all([
+        api.getTasks(),
+        api.getApprovals(),
+        api.getActivity(),
+        api.getProjects(),
+        api.getSettings().catch(() => settings),
+        api.getAnalytics().catch(() => null)
+      ]);
+
+      setTasks(tList || []);
+      setProposals(pList || []);
+      setActivity(aList || []);
+      setProjects(prjList || []);
+      if (sData) setSettings(sData);
+      if (anaData) setAnalytics(anaData);
+      setBackendConnected(true);
+    } catch (err) {
+      console.error('[Store] Failed to load data from backend:', err);
+      setError(err.message);
+      setBackendConnected(false);
+    } finally {
+      setLoading(false);
+    }
+  }, [settings]);
+
+  useEffect(() => {
+    refresh();
+  }, []);
+
+  // Task Mutations
+  const addTask = async (t) => {
+    try {
+      const created = await api.createTask(t);
+      showToast(`Task created: "${created.title}"`, 'success');
+      await refresh(true);
+      return created;
+    } catch (err) {
+      showToast(`Failed to create task: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const updateTask = async (t) => {
+    try {
+      const updated = await api.updateTask(t.id, t);
+      showToast(`Task updated: "${updated.title}"`, 'success');
+      await refresh(true);
+      return updated;
+    } catch (err) {
+      showToast(`Failed to update task: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const deleteTask = async (id) => {
+    try {
+      await api.deleteTask(id);
+      showToast('Task removed from workspace', 'info');
+      await refresh(true);
+    } catch (err) {
+      showToast(`Failed to delete task: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const toggleTask = async (id) => {
+    const t = tasks.find(x => x.id === id);
+    if (!t) return;
+    const newStatus = t.status === 'done' ? 'todo' : 'done';
+    try {
+      await api.updateTask(id, { status: newStatus });
+      showToast(newStatus === 'done' ? `Completed "${t.title}"` : `Reopened "${t.title}"`, 'success');
+      await refresh(true);
+    } catch (err) {
+      showToast(`Failed to toggle task: ${err.message}`, 'error');
+    }
+  };
+
+  // Proposals & Approvals
+  const addProposal = async (p) => {
+    try {
+      const result = await api.generatePlan({ command: p.title });
+      showToast('Action plan created and sent to Approvals!', 'success');
+      await refresh(true);
+      return result;
+    } catch (err) {
+      showToast(`Failed to send proposal: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const decide = async (id, ok, editedTasks) => {
+    try {
+      if (ok) {
+        const result = await api.approveProposal(id, editedTasks);
+        showToast(`Approved! Executed ${result.summary?.successCount || 0} task actions in database.`, 'success');
+        await refresh(true);
+        return result;
+      } else {
+        const result = await api.rejectProposal(id);
+        showToast('Proposal rejected. Zero database mutations.', 'info');
+        await refresh(true);
+        return result;
+      }
+    } catch (err) {
+      showToast(`Decision execution error: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const saveSettings = async (v) => {
+    try {
+      const saved = await api.saveSettings(v);
+      setSettings(saved);
+      showToast('Settings saved to backend', 'success');
+      await refresh(true);
+      return saved;
+    } catch (err) {
+      showToast(`Failed to save settings: ${err.message}`, 'error');
+      throw err;
+    }
+  };
+
+  const reset = async () => {
+    try {
+      // Re-seed backend by calling initial task reset or refresh
+      showToast('Reloading workspace data...', 'info');
+      await refresh();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  };
+
+  const value = {
+    tasks,
+    proposals,
+    activity,
+    projects,
+    analytics,
+    settings,
+    loading,
+    error,
+    backendConnected,
+    toasts,
+    showToast,
+    removeToast,
+    refresh,
+    addTask,
+    updateTask,
+    deleteTask,
+    toggleTask,
+    addProposal,
+    decide,
+    saveSettings,
+    reset
+  };
+
+  return (
+    <C.Provider value={value}>
+      {children}
+      {/* Toast Notification Container */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm pointer-events-none">
+        {toasts.map(t => (
+          <div
+            key={t.id}
+            className={`pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-2xl shadow-xl text-sm font-semibold backdrop-blur-xl border transition-all animate-bounce-short ${
+              t.type === 'error'
+                ? 'bg-rose-500/95 text-white border-rose-400'
+                : t.type === 'success'
+                ? 'bg-brand-600/95 text-white border-brand-400'
+                : 'bg-white/95 text-ink border-brand-200'
+            }`}
+          >
+            <span>{t.message}</span>
+            <button
+              onClick={() => removeToast(t.id)}
+              className="text-xs opacity-75 hover:opacity-100 ml-2"
+              aria-label="Dismiss toast"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+    </C.Provider>
+  );
+}
