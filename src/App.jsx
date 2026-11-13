@@ -1,0 +1,22 @@
+import React,{useState,useEffect} from 'react';import {Routes,Route,NavLink,useLocation,useNavigate,Navigate} from 'react-router-dom';
+import {Home,Bot,FolderKanban,CheckSquare,Activity as Act,CalendarDays,Zap,BarChart3,Settings as Cog,Puzzle,Search,Bell,Menu,X,ChevronDown} from 'lucide-react';
+import {useApp} from './store.jsx';import * as P from './pages.jsx';
+const main=[['/','Overview',Home],['/agent','Agent Studio',Bot],['/space','My Space',FolderKanban],['/approvals','Approvals',CheckSquare],['/activity','Activity',Act]];
+const tools=[['/calendar','Calendar View',CalendarDays],['/quick-actions','Quick Actions',Zap],['/analytics','Analytics',BarChart3]];
+const foot=[['/settings','Settings',Cog],['/extension','Get Extension',Puzzle]];
+export default function App(){
+const[open,setOpen]=useState(false);const loc=useLocation();const nav=useNavigate();const{proposals,settings}=useApp();const[q,setQ]=useState('');
+const pend=proposals.filter(p=>p.status==='pending').length;
+useEffect(()=>{setOpen(false);window.scrollTo(0,0)},[loc.pathname]);
+const Link=([to,l,I])=><NavLink key={to} to={to} end={to==='/'} className={({isActive})=>'flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition '+(isActive?'text-white shadow-lg':'text-ink/80 hover:bg-white/70')} style={({isActive})=>isActive?{background:'linear-gradient(135deg,#a78bfa,#8b5cf6)'}:{}}><I size={20}/>{l}{to==='/approvals'&&pend>0&&<span className="ml-auto grid h-6 w-6 place-items-center rounded-full bg-brand-500 text-xs font-bold text-white">{pend}</span>}</NavLink>;
+const side=<div className="flex h-full flex-col gap-1 p-4"><div className="mb-5 flex items-center gap-2 px-2"><div className="grid h-10 w-10 place-items-center rounded-2xl text-white" style={{background:'linear-gradient(135deg,#8b5cf6,#6d28d9)'}}><Zap size={22}/></div><div><div className="text-xl font-extrabold italic leading-5">SaarthiFlow</div><div className="text-xs text-ink/60">From Browsing to Doing</div></div></div>
+{main.map(Link)}<div className="mt-4 border-t border-brand-100 px-3 pb-1 pt-4 text-sm font-semibold text-ink/60">Tools</div>{tools.map(Link)}
+<div className="mt-auto space-y-1">{foot.map(Link)}</div></div>;
+return <div className="min-h-screen">
+<aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-white/70 bg-white/50 backdrop-blur-xl lg:block">{side}</aside>
+{open&&<div className="fixed inset-0 z-40 lg:hidden"><div className="absolute inset-0 bg-ink/30" onClick={()=>setOpen(false)}/><aside className="absolute inset-y-0 left-0 w-72 bg-white/95 backdrop-blur-xl"><button className="absolute right-3 top-3" onClick={()=>setOpen(false)} aria-label="Close menu"><X/></button>{side}</aside></div>}
+<div className="lg:pl-64"><header className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 md:px-8"><button className="glass !rounded-xl p-2 lg:hidden" onClick={()=>setOpen(true)} aria-label="Open menu"><Menu/></button>
+<form className="glass !rounded-full ml-auto flex max-w-md flex-1 items-center gap-2 px-4 py-2" onSubmit={e=>{e.preventDefault();nav('/space?q='+encodeURIComponent(q))}}><Search size={18} className="text-ink/50"/><input value={q} onChange={e=>setQ(e.target.value)} className="w-full bg-transparent text-sm outline-none" placeholder="Search tasks…"/></form>
+<button className="glass relative !rounded-full p-2.5" onClick={()=>nav('/approvals')} aria-label="Approvals"><Bell size={20}/>{pend>0&&<i className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-brand-500"/>}</button>
+<NavLink to="/settings" className="flex items-center gap-1"><span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-brand-700 font-bold text-white">{settings.name[0]}</span><ChevronDown size={16}/></NavLink></header>
+<main className="px-4 pb-10 md:px-8"><Routes><Route path="/" element={<P.Overview/>}/><Route path="/agent" element={<P.Agent/>}/><Route path="/space" element={<P.Space/>}/><Route path="/approvals" element={<P.Approvals/>}/><Route path="/activity" element={<P.ActivityPage/>}/><Route path="/calendar" element={<P.CalendarPage/>}/><Route path="/quick-actions" element={<P.Quick/>}/><Route path="/analytics" element={<P.Analytics/>}/><Route path="/settings" element={<P.SettingsPage/>}/><Route path="/extension" element={<P.Extension/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Routes></main></div></div>}

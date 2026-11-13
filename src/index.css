@@ -1,0 +1,12 @@
+@tailwind base;@tailwind components;@tailwind utilities;
+body{@apply font-sans text-ink antialiased;background:radial-gradient(1200px 600px at 10% 0%,#efe6ff 0,transparent 60%),radial-gradient(900px 600px at 100% 100%,#e4d7ff 0,transparent 55%),#f8f5ff;min-height:100vh}
+@layer components{
+.glass{@apply rounded-3xl border border-white/80 bg-white/60 backdrop-blur-xl;box-shadow:0 10px 30px -12px rgba(124,58,237,.22),inset 0 1px 0 rgba(255,255,255,.95)}
+.hov{@apply transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-14px_rgba(124,58,237,.35)]}
+.btn{@apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition active:scale-95 hover:brightness-110;background:linear-gradient(135deg,#8b5cf6,#7c3aed);box-shadow:0 8px 18px -8px rgba(124,58,237,.7)}
+.btn2{@apply inline-flex items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white/70 px-4 py-2 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 active:scale-95}
+.inp{@apply w-full rounded-xl border border-brand-100 bg-white/80 px-3 py-2 text-sm outline-none transition focus:border-brand-400 focus:ring-2 focus:ring-brand-200}
+.chip{@apply rounded-full px-2.5 py-0.5 text-xs font-semibold}
+.rise{animation:rise .5s ease both}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rise{animation:none}}
