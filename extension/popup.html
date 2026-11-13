@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaarthiFlow</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- TOP APP HEADER -->
+    <header class="app-header">
+      <div class="brand-group">
+        <div class="logo-box">
+          <svg class="icon-zap" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">SaarthiFlow</div>
+          <div class="brand-tagline">From Browsing to Doing</div>
+        </div>
+      </div>
+      
+      <div class="header-actions">
+        <!-- Status Indicator Pill -->
+        <button id="btn-status-pill" class="status-pill status-demo" title="Click to view or switch mode">
+          <span class="status-dot"></span>
+          <span id="txt-mode-label">Demo</span>
+        </button>
+        <!-- Settings Toggle Button -->
+        <button id="btn-toggle-settings" class="icon-btn" aria-label="Open Settings" title="Settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- NOTIFICATION & ALERT BANNER -->
+    <div id="banner-alert" class="alert-banner hidden">
+      <div class="alert-content">
+        <span id="alert-icon" class="alert-icon"></span>
+        <span id="alert-message" class="alert-text"></span>
+      </div>
+      <button id="btn-close-alert" class="alert-close" aria-label="Dismiss">&times;</button>
+    </div>
+
+    <!-- MAIN SCROLLABLE CONTENT VIEW -->
+    <main id="view-main" class="main-view">
+      
+      <!-- CURRENT ACTIVE TAB CARD -->
+      <section class="card tab-card">
+        <div class="tab-card-header">
+          <div class="tab-favicon-wrap">
+            <img id="tab-favicon" class="tab-favicon hidden" alt="favicon" />
+            <svg id="tab-favicon-fallback" class="tab-favicon-fallback" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </div>
+          <div class="tab-info">
+            <span id="tab-domain" class="tab-domain">Detecting webpage…</span>
+            <h1 id="tab-title" class="tab-title">Loading active tab…</h1>
+          </div>
+        </div>
+        <div id="tab-url-bar" class="tab-url-bar" title="Current URL">
+          <span id="tab-url" class="tab-url">https://…</span>
+        </div>
+      </section>
+
+      <!-- PRIMARY ACTION BUTTON -->
+      <section class="action-hero">
+        <button id="btn-analyze" class="btn btn-primary btn-hero">
+          <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+          </svg>
+          <span>Analyze This Page</span>
+        </button>
+      </section>
+
+      <!-- EXTRACTION & ANALYSIS LOADING STATE -->
+      <section id="panel-loading" class="card loading-card hidden">
+        <div class="spinner-ring"></div>
+        <div class="loading-content">
+          <div id="loading-stage-title" class="loading-title">Analyzing webpage…</div>
+          <div id="loading-stage-desc" class="loading-desc">Extracting content and identifying deadlines</div>
+        </div>
+      </section>
+
+      <!-- EXTRACTION PREVIEW & RESULTS CONTAINER -->
+      <div id="panel-results" class="results-container hidden">
+
+        <!-- MODE BADGE / NOTICE -->
+        <div id="badge-mode-notice" class="mode-notice mode-demo-notice">
+          <div class="mode-notice-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+          </div>
+          <div class="mode-notice-text">
+            <strong>Local Demo Mode:</strong> Analyzed real webpage structure. Tasks generated deterministically for testing without backend.
+          </div>
+        </div>
+
+        <!-- SUMMARY CARD -->
+        <section class="card summary-card">
+          <div class="section-title-row">
+            <span class="section-icon-badge">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="16" y1="13" x2="8" y2="13"></line>
+                <line x1="16" y1="17" x2="8" y2="17"></line>
+                <polyline points="10 9 9 9 8 9"></polyline>
+              </svg>
+            </span>
+            <h2 class="section-heading">Page Summary</h2>
+            <span id="badge-category" class="chip chip-category">General</span>
+          </div>
+          <p id="txt-summary" class="summary-text"></p>
+        </section>
+
+        <!-- IMPORTANT INFORMATION: DATES & REQUIREMENTS -->
+        <section id="card-deadlines" class="card deadlines-card">
+          <div class="section-title-row">
+            <span class="section-icon-badge">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </span>
+            <h2 class="section-heading">Detected Deadlines & Key Dates</h2>
+          </div>
+          <div id="list-deadlines" class="deadlines-list">
+            <!-- Dynamically populated tags -->
+          </div>
+        </section>
+
+        <!-- SUGGESTED TASKS SECTION -->
+        <section class="card tasks-card">
+          <div class="tasks-header">
+            <div class="section-title-row">
+              <span class="section-icon-badge">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 11 12 14 22 4"></polyline>
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+              </span>
+              <h2 class="section-heading">Suggested Tasks</h2>
+              <span id="txt-task-count" class="chip chip-count">0</span>
+            </div>
+            
+            <div class="tasks-batch-actions">
+              <button id="btn-select-all" class="text-btn">Select All</button>
+              <span class="divider-dot">•</span>
+              <button id="btn-deselect-all" class="text-btn">Deselect All</button>
+              <span class="divider-dot">•</span>
+              <button id="btn-add-task" class="text-btn text-btn-brand">+ Add Task</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Task List -->
+          <div id="container-tasks-list" class="tasks-list">
+            <!-- Rendered by popup.js -->
+          </div>
+
+          <!-- SUBMISSION & APPROVAL ACTIONS -->
+          <div class="approval-actions">
+            <button id="btn-send-approval" class="btn btn-primary btn-block">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+              <span id="txt-submit-btn-label">Send 0 Tasks for Approval</span>
+            </button>
+          </div>
+
+          <!-- SUBMISSION FEEDBACK CARD -->
+          <div id="panel-submission-feedback" class="submission-feedback hidden">
+            <div class="feedback-icon-box">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M20 6L9 17l-5-5"></path>
+              </svg>
+            </div>
+            <div class="feedback-details">
+              <div id="txt-feedback-title" class="feedback-title">Submitted for Approval!</div>
+              <div id="txt-feedback-message" class="feedback-desc">Review and decide in SaarthiFlow Approvals.</div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
+    </main>
+
+    <!-- SETTINGS VIEW PANEL (OVERLAY / SLIDE-IN) -->
+    <div id="view-settings" class="settings-view hidden">
+      <div class="settings-header">
+        <button id="btn-back-from-settings" class="icon-btn" aria-label="Back to main view">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <h2 class="settings-title">Extension Settings</h2>
+      </div>
+
+      <div class="settings-content">
+        
+        <!-- OPERATING MODE SELECTOR -->
+        <div class="settings-group">
+          <label class="settings-label">Operating Mode</label>
+          <div class="mode-switch-container">
+            <button id="opt-mode-demo" class="mode-pill-option active" data-mode="demo">
+              <span class="mode-opt-title">Demo Mode</span>
+              <span class="mode-opt-desc">Local extraction & testing</span>
+            </button>
+            <button id="opt-mode-live" class="mode-pill-option" data-mode="live">
+              <span class="mode-opt-title">Live Backend</span>
+              <span class="mode-opt-desc">SaarthiFlow + Activepieces</span>
+            </button>
+          </div>
+          <p class="settings-hint">
+            <strong>Demo Mode</strong> operates completely offline with deterministic local parsing.<br>
+            <strong>Live Mode</strong> sends webpage content to your configured backend.
+          </p>
+        </div>
+
+        <!-- BACKEND API CONFIGURATION -->
+        <div id="group-backend-urls" class="settings-group">
+          <label for="input-backend-url" class="settings-label">Backend API Base URL</label>
+          <input id="input-backend-url" type="url" class="inp" placeholder="http://localhost:3000" />
+          <p class="settings-hint">Default SaarthiFlow backend server endpoint.</p>
+
+          <label for="input-dashboard-url" class="settings-label" style="margin-top: 12px;">SaarthiFlow Web Dashboard URL</label>
+          <input id="input-dashboard-url" type="url" class="inp" placeholder="http://localhost:5173" />
+          <p class="settings-hint">Web app URL for viewing Approvals and My Space.</p>
+
+          <!-- TEST CONNECTION BUTTON & STATUS -->
+          <div class="connection-test-row">
+            <button id="btn-test-connection" class="btn btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span>Test Connection</span>
+            </button>
+            <span id="status-connection-badge" class="connection-status-pill">Ready to test</span>
+          </div>
+        </div>
+
+        <!-- DEMO STORAGE MANAGEMENT -->
+        <div class="settings-group">
+          <label class="settings-label">Demo Storage</label>
+          <div class="demo-storage-box">
+            <div class="storage-info">
+              <span id="txt-demo-proposals-count" class="storage-count">0 proposals</span>
+              <span class="storage-desc">stored locally in Chrome</span>
+            </div>
+            <button id="btn-clear-demo" class="btn btn-secondary btn-sm btn-danger-soft">Clear Demo Data</button>
+          </div>
+        </div>
+
+        <!-- SAVE SETTINGS -->
+        <div class="settings-footer">
+          <button id="btn-save-settings" class="btn btn-primary btn-block">Save Settings</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PERSISTENT FOOTER -->
+    <footer class="app-footer">
+      <div class="footer-links">
+        <a id="link-dashboard" href="#" class="footer-link">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          Dashboard
+        </a>
+        <span class="footer-divider">|</span>
+        <a id="link-approvals" href="#" class="footer-link">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 11 12 14 22 4"></polyline>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+          </svg>
+          Approvals
+        </a>
+        <span class="footer-divider">|</span>
+        <a id="link-space" href="#" class="footer-link">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          My Tasks
+        </a>
+      </div>
+      <div class="footer-brand-note">SaarthiFlow v1.0.0</div>
+    </footer>
+
+  </div>
+
+  <!-- Extension Scripts in Dependency Order -->
+  <script src="config.js"></script>
+  <script src="api.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
