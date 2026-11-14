@@ -24,14 +24,23 @@
       </div>
       
       <div class="header-actions">
-        <!-- Status Indicator Pill -->
-        <button id="btn-status-pill" class="status-pill status-demo" title="Click to view or switch mode">
-          <span class="status-dot"></span>
-          <span id="txt-mode-label">Demo</span>
+        <!-- Recent Captures Toggle -->
+        <button id="btn-toggle-recents" class="icon-btn" aria-label="Recent Captures" title="Recent Captures">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
         </button>
+
+        <!-- Status Indicator Pill -->
+        <button id="btn-status-pill" class="status-pill status-live-ok" title="Click to view mode or test connection">
+          <span class="status-dot"></span>
+          <span id="txt-mode-label">Live Mode</span>
+        </button>
+
         <!-- Settings Toggle Button -->
         <button id="btn-toggle-settings" class="icon-btn" aria-label="Open Settings" title="Settings">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
             <circle cx="12" cy="12" r="3"></circle>
           </svg>
@@ -56,15 +65,18 @@
         <div class="tab-card-header">
           <div class="tab-favicon-wrap">
             <img id="tab-favicon" class="tab-favicon hidden" alt="favicon" />
-            <svg id="tab-favicon-fallback" class="tab-favicon-fallback" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <svg id="tab-favicon-fallback" class="tab-favicon-fallback" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
           </div>
           <div class="tab-info">
-            <span id="tab-domain" class="tab-domain">Detecting webpage…</span>
-            <h1 id="tab-title" class="tab-title">Loading active tab…</h1>
+            <div class="tab-meta-row">
+              <span id="tab-domain" class="tab-domain">Detecting…</span>
+              <span id="badge-page-type" class="badge-type">Analyzing structure…</span>
+            </div>
+            <h1 id="tab-title" class="tab-title">Loading active webpage…</h1>
           </div>
         </div>
         <div id="tab-url-bar" class="tab-url-bar" title="Current URL">
@@ -72,80 +84,120 @@
         </div>
       </section>
 
-      <!-- PRIMARY ACTION BUTTON -->
-      <section class="action-hero">
+      <!-- INITIAL ACTIONS HERO -->
+      <section id="panel-initial-actions" class="action-hero">
+        <!-- Primary Action: Turn This Page Into Actions -->
         <button id="btn-analyze" class="btn btn-primary btn-hero">
           <svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
-          <span>Analyze This Page</span>
+          <span>Turn This Page Into Actions</span>
         </button>
+
+        <!-- Secondary Action Row -->
+        <div class="action-secondary-row">
+          <button id="btn-quick-task" class="btn btn-secondary btn-sm flex-1">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>Create Task Manually</span>
+          </button>
+          <button id="btn-save-later" class="btn btn-secondary btn-sm flex-1" title="Save this URL as a task to review later">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Save for Later</span>
+          </button>
+        </div>
       </section>
 
-      <!-- EXTRACTION & ANALYSIS LOADING STATE -->
+      <!-- LOADING & AGENT EXECUTION STATE -->
       <section id="panel-loading" class="card loading-card hidden">
         <div class="spinner-ring"></div>
         <div class="loading-content">
-          <div id="loading-stage-title" class="loading-title">Analyzing webpage…</div>
-          <div id="loading-stage-desc" class="loading-desc">Extracting content and identifying deadlines</div>
+          <div id="loading-stage-title" class="loading-title">Understanding webpage…</div>
+          <div id="loading-stage-desc" class="loading-desc">Extracting requirements, dates, and action items</div>
         </div>
       </section>
 
-      <!-- EXTRACTION PREVIEW & RESULTS CONTAINER -->
+      <!-- RESULTS CONTAINER -->
       <div id="panel-results" class="results-container hidden">
 
-        <!-- MODE BADGE / NOTICE -->
-        <div id="badge-mode-notice" class="mode-notice mode-demo-notice">
-          <div class="mode-notice-icon">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <!-- NON-ACTIONABLE PAGE NOTICE -->
+        <section id="card-non-actionable" class="card non-actionable-card hidden">
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
           </div>
-          <div class="mode-notice-text">
-            <strong>Local Demo Mode:</strong> Analyzed real webpage structure. Tasks generated deterministically for testing without backend.
-          </div>
-        </div>
-
-        <!-- SUMMARY CARD -->
-        <section class="card summary-card">
-          <div class="section-title-row">
-            <span class="section-icon-badge">
+          <h3 class="non-actionable-title">No clear actionable opportunity detected</h3>
+          <p class="non-actionable-desc">
+            This page appears to be a general website or homepage. SaarthiFlow avoids fabricating fake tasks. You can still create custom action items:
+          </p>
+          <div class="non-actionable-actions">
+            <button id="btn-na-quick-task" class="btn btn-primary btn-sm">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
-            </span>
-            <h2 class="section-heading">Page Summary</h2>
-            <span id="badge-category" class="chip chip-category">General</span>
-          </div>
-          <p id="txt-summary" class="summary-text"></p>
-        </section>
-
-        <!-- IMPORTANT INFORMATION: DATES & REQUIREMENTS -->
-        <section id="card-deadlines" class="card deadlines-card">
-          <div class="section-title-row">
-            <span class="section-icon-badge">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
-            </span>
-            <h2 class="section-heading">Detected Deadlines & Key Dates</h2>
-          </div>
-          <div id="list-deadlines" class="deadlines-list">
-            <!-- Dynamically populated tags -->
+              Create a Task Manually
+            </button>
+            <button id="btn-na-force-plan" class="btn btn-secondary btn-sm">
+              Ask Agent to Find Actions Anyway
+            </button>
           </div>
         </section>
 
-        <!-- SUGGESTED TASKS SECTION -->
-        <section class="card tasks-card">
+        <!-- ACTIONABLE OPPORTUNITY SUMMARY CARD -->
+        <section id="card-opportunity" class="card opportunity-card">
+          <div class="opportunity-header">
+            <div class="opp-badge-row">
+              <span id="txt-opp-category-badge" class="badge-category">🏆 Hackathon</span>
+              <span id="txt-opp-organizer" class="badge-organizer">Host: Not specified</span>
+            </div>
+            <h2 id="txt-opp-title" class="opportunity-title">Opportunity Title</h2>
+          </div>
+
+          <!-- Key Metadata Grid -->
+          <div class="opp-metadata-grid">
+            <div class="meta-item">
+              <span class="meta-label">📅 Deadline</span>
+              <span id="txt-opp-deadline" class="meta-value">Not specified</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">🎯 Eligibility</span>
+              <span id="txt-opp-eligibility" class="meta-value">Not specified</span>
+            </div>
+          </div>
+
+          <!-- Requirements Checklist / Pills -->
+          <div class="opp-section">
+            <div class="opp-section-title">Key Requirements & Deliverables</div>
+            <div id="list-opp-requirements" class="requirements-pill-list">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Recommended Next Steps -->
+          <div class="opp-section">
+            <div class="opp-section-title">Recommended Next Steps</div>
+            <ul id="list-opp-steps" class="steps-bullet-list">
+              <!-- Rendered dynamically -->
+            </ul>
+          </div>
+
+          <!-- Action Links -->
+          <div id="box-action-links" class="action-links-box hidden">
+            <span class="links-label">Important Links:</span>
+            <div id="list-action-links" class="links-row"></div>
+          </div>
+        </section>
+
+        <!-- PROPOSED TASKS SECTION -->
+        <section id="card-tasks" class="card tasks-card">
           <div class="tasks-header">
             <div class="section-title-row">
               <span class="section-icon-badge">
@@ -154,7 +206,7 @@
                   <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
                 </svg>
               </span>
-              <h2 class="section-heading">Suggested Tasks</h2>
+              <h3 class="section-heading">Proposed Tasks</h3>
               <span id="txt-task-count" class="chip chip-count">0</span>
             </div>
             
@@ -167,7 +219,7 @@
             </div>
           </div>
 
-          <!-- Dynamic Task List -->
+          <!-- Dynamic Tasks List -->
           <div id="container-tasks-list" class="tasks-list">
             <!-- Rendered by popup.js -->
           </div>
@@ -175,7 +227,7 @@
           <!-- SUBMISSION & APPROVAL ACTIONS -->
           <div class="approval-actions">
             <button id="btn-send-approval" class="btn btn-primary btn-block">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
@@ -183,16 +235,19 @@
             </button>
           </div>
 
-          <!-- SUBMISSION FEEDBACK CARD -->
-          <div id="panel-submission-feedback" class="submission-feedback hidden">
-            <div class="feedback-icon-box">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M20 6L9 17l-5-5"></path>
-              </svg>
+          <!-- HUMAN-IN-THE-LOOP STATUS TRACKER -->
+          <div id="panel-workflow-status" class="workflow-status-card hidden">
+            <div class="workflow-status-header">
+              <span class="status-badge-step">Awaiting Approval</span>
+              <span class="status-badge-time">Just now</span>
             </div>
-            <div class="feedback-details">
-              <div id="txt-feedback-title" class="feedback-title">Submitted for Approval!</div>
-              <div id="txt-feedback-message" class="feedback-desc">Review and decide in SaarthiFlow Approvals.</div>
+            <p id="txt-workflow-desc" class="workflow-status-text">
+              Plan created on SaarthiFlow backend. Tasks require your approval before being added to My Space.
+            </p>
+            <div class="workflow-action-buttons">
+              <button id="btn-open-approvals-page" class="btn btn-secondary btn-sm flex-1">
+                Open SaarthiFlow Approvals →
+              </button>
             </div>
           </div>
 
@@ -202,10 +257,74 @@
 
     </main>
 
-    <!-- SETTINGS VIEW PANEL (OVERLAY / SLIDE-IN) -->
+    <!-- QUICK TASK MODAL (OVERLAY) -->
+    <div id="modal-quick-task" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Create Quick Task</h3>
+          <button id="btn-close-quick-modal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <label class="input-label" for="input-qt-title">Task Title</label>
+          <input id="input-qt-title" type="text" class="inp" placeholder="e.g. Review registration requirements" />
+
+          <div class="modal-row-2">
+            <div>
+              <label class="input-label" for="select-qt-priority">Priority</label>
+              <select id="select-qt-priority" class="inp">
+                <option value="High">High</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="Low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label class="input-label" for="input-qt-due">Due Date</label>
+              <input id="input-qt-due" type="date" class="inp" />
+            </div>
+          </div>
+
+          <label class="input-label" for="select-qt-project">Category / Project</label>
+          <select id="select-qt-project" class="inp">
+            <option value="Hackathon">Hackathon</option>
+            <option value="Internships">Internships</option>
+            <option value="Open Source">Open Source</option>
+            <option value="College">College</option>
+            <option value="Learning">Learning</option>
+            <option value="General" selected>General</option>
+          </select>
+
+          <label class="input-label" for="input-qt-source">Source Reference</label>
+          <input id="input-qt-source" type="text" class="inp inp-disabled" readonly />
+        </div>
+        <div class="modal-footer">
+          <button id="btn-submit-quick-task" class="btn btn-primary btn-block">Add to My Space</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECENT CAPTURES DRAWER -->
+    <div id="view-recents" class="settings-view hidden">
+      <div class="settings-header">
+        <button id="btn-back-from-recents" class="icon-btn" aria-label="Back">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <h2 class="settings-title">Recent Captures</h2>
+      </div>
+      <div class="settings-content">
+        <p class="settings-hint">Recently analyzed opportunities and pages from your browsing sessions.</p>
+        <div id="list-recent-captures" class="recents-list">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS VIEW PANEL -->
     <div id="view-settings" class="settings-view hidden">
       <div class="settings-header">
-        <button id="btn-back-from-settings" class="icon-btn" aria-label="Back to main view">
+        <button id="btn-back-from-settings" class="icon-btn" aria-label="Back">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="19" y1="12" x2="5" y2="12"></line>
             <polyline points="12 19 5 12 12 5"></polyline>
@@ -220,30 +339,30 @@
         <div class="settings-group">
           <label class="settings-label">Operating Mode</label>
           <div class="mode-switch-container">
-            <button id="opt-mode-demo" class="mode-pill-option active" data-mode="demo">
-              <span class="mode-opt-title">Demo Mode</span>
-              <span class="mode-opt-desc">Local extraction & testing</span>
+            <button id="opt-mode-live" class="mode-pill-option active" data-mode="live">
+              <span class="mode-opt-title">Live Mode (Production)</span>
+              <span class="mode-opt-desc">SaarthiFlow AI Agent & Backend</span>
             </button>
-            <button id="opt-mode-live" class="mode-pill-option" data-mode="live">
-              <span class="mode-opt-title">Live Backend</span>
-              <span class="mode-opt-desc">SaarthiFlow + Activepieces</span>
+            <button id="opt-mode-demo" class="mode-pill-option" data-mode="demo">
+              <span class="mode-opt-title">Demo Mode (Offline)</span>
+              <span class="mode-opt-desc">Deterministic local testing</span>
             </button>
           </div>
           <p class="settings-hint">
-            <strong>Demo Mode</strong> operates completely offline with deterministic local parsing.<br>
-            <strong>Live Mode</strong> sends webpage content to your configured backend.
+            <strong>Live Mode:</strong> Sends extracted content to the SaarthiFlow Express backend & Gemini agent for real task planning and database proposals.<br>
+            <strong>Demo Mode:</strong> Offline testing without servers or API keys.
           </p>
         </div>
 
         <!-- BACKEND API CONFIGURATION -->
         <div id="group-backend-urls" class="settings-group">
-          <label for="input-backend-url" class="settings-label">Backend API Base URL</label>
-          <input id="input-backend-url" type="url" class="inp" placeholder="http://localhost:3000" />
-          <p class="settings-hint">Default SaarthiFlow backend server endpoint.</p>
+          <label for="input-backend-url" class="settings-label">SaarthiFlow Backend URL</label>
+          <input id="input-backend-url" type="url" class="inp" placeholder="http://localhost:3001" />
+          <p class="settings-hint">Port 3001 (SaarthiFlow Express Server).</p>
 
-          <label for="input-dashboard-url" class="settings-label" style="margin-top: 12px;">SaarthiFlow Web Dashboard URL</label>
+          <label for="input-dashboard-url" class="settings-label" style="margin-top: 10px;">Web Dashboard URL</label>
           <input id="input-dashboard-url" type="url" class="inp" placeholder="http://localhost:5173" />
-          <p class="settings-hint">Web app URL for viewing Approvals and My Space.</p>
+          <p class="settings-hint">Port 5173 (SaarthiFlow React App).</p>
 
           <!-- TEST CONNECTION BUTTON & STATUS -->
           <div class="connection-test-row">
@@ -254,7 +373,7 @@
               </svg>
               <span>Test Connection</span>
             </button>
-            <span id="status-connection-badge" class="connection-status-pill">Ready to test</span>
+            <span id="status-connection-badge" class="connection-status-pill">Ready</span>
           </div>
         </div>
 
@@ -264,7 +383,7 @@
           <div class="demo-storage-box">
             <div class="storage-info">
               <span id="txt-demo-proposals-count" class="storage-count">0 proposals</span>
-              <span class="storage-desc">stored locally in Chrome</span>
+              <span class="storage-desc">saved locally in Chrome storage</span>
             </div>
             <button id="btn-clear-demo" class="btn btn-secondary btn-sm btn-danger-soft">Clear Demo Data</button>
           </div>
@@ -281,35 +400,18 @@
     <!-- PERSISTENT FOOTER -->
     <footer class="app-footer">
       <div class="footer-links">
-        <a id="link-dashboard" href="#" class="footer-link">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-          Dashboard
-        </a>
+        <a id="link-dashboard" href="#" class="footer-link">Dashboard</a>
         <span class="footer-divider">|</span>
-        <a id="link-approvals" href="#" class="footer-link">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="9 11 12 14 22 4"></polyline>
-            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-          </svg>
-          Approvals
-        </a>
+        <a id="link-approvals" href="#" class="footer-link">Approvals</a>
         <span class="footer-divider">|</span>
-        <a id="link-space" href="#" class="footer-link">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
-          </svg>
-          My Tasks
-        </a>
+        <a id="link-space" href="#" class="footer-link">My Space</a>
       </div>
-      <div class="footer-brand-note">SaarthiFlow v1.0.0</div>
+      <div class="footer-brand-note">Agents That Get Work Done</div>
     </footer>
 
   </div>
 
-  <!-- Extension Scripts in Dependency Order -->
+  <!-- Extension Scripts -->
   <script src="config.js"></script>
   <script src="api.js"></script>
   <script src="popup.js"></script>

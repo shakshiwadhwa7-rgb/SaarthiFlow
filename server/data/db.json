@@ -1,0 +1,415 @@
+{
+  "tasks": [
+    {
+      "id": "t-mwfnahj9-llvof",
+      "title": "Create contribution branch and prepare pull request",
+      "project": "Open Source",
+      "priority": "Low",
+      "status": "todo",
+      "due": "2026-11-21",
+      "created_at": "2026-11-14T00:05:57.957Z"
+    },
+    {
+      "id": "t-mwfnahix-dgr78",
+      "title": "Explore open issues to find beginner-friendly tasks",
+      "project": "Open Source",
+      "priority": "Medium",
+      "status": "todo",
+      "due": "2026-11-19",
+      "created_at": "2026-11-14T00:05:57.945Z"
+    },
+    {
+      "id": "t-mwfnahin-5zhnr",
+      "title": "Set up local development environment and run tests",
+      "project": "Open Source",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-17",
+      "created_at": "2026-11-14T00:05:57.935Z"
+    },
+    {
+      "id": "t-mwfnahid-aywv9",
+      "title": "Read project README and architecture overview",
+      "project": "Open Source",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-16",
+      "created_at": "2026-11-14T00:05:57.925Z"
+    },
+    {
+      "id": "t-mwfnaer6-h2djr",
+      "title": "Finalize submission artifacts and record status",
+      "project": "General",
+      "priority": "Low",
+      "status": "todo",
+      "due": "2026-11-21",
+      "created_at": "2026-11-14T00:05:54.354Z"
+    },
+    {
+      "id": "t-mwfnaequ-obv5r",
+      "title": "Execute primary deliverables before deadline",
+      "project": "General",
+      "priority": "Medium",
+      "status": "todo",
+      "due": "2026-11-19",
+      "created_at": "2026-11-14T00:05:54.342Z"
+    },
+    {
+      "id": "t-mwfnaeqf-gbgug",
+      "title": "Complete registration or initial setup checklist",
+      "project": "General",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-17",
+      "created_at": "2026-11-14T00:05:54.327Z"
+    },
+    {
+      "id": "t-mwfnaeq3-pmumm",
+      "title": "Review event / page guidelines and criteria",
+      "project": "General",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-16",
+      "created_at": "2026-11-14T00:05:54.315Z"
+    },
+    {
+      "id": "t-mwfn93wt-2u4lg",
+      "title": "eat snacks",
+      "project": "General",
+      "priority": "Low",
+      "status": "todo",
+      "due": "2026-11-17",
+      "created_at": "2026-11-14T00:04:53.645Z"
+    },
+    {
+      "id": "t-1",
+      "title": "Submit GSSoC application",
+      "project": "Open Source",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-18",
+      "created_at": "2026-11-14T00:03:22.486Z"
+    },
+    {
+      "id": "t-2",
+      "title": "Complete Azure AI-900 practice",
+      "project": "Learning",
+      "priority": "Medium",
+      "status": "done",
+      "due": "2026-11-12",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-3",
+      "title": "Build SaarthiFlow MVP",
+      "project": "Hackathon",
+      "priority": "High",
+      "status": "doing",
+      "due": "2026-11-20",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-4",
+      "title": "Paper review for agents",
+      "project": "Research",
+      "priority": "Medium",
+      "status": "todo",
+      "due": "2026-11-22",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-5",
+      "title": "HackOWASP registration",
+      "project": "Hackathon",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-11-17",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-6",
+      "title": "Infosys Internship Course",
+      "project": "Internships",
+      "priority": "Low",
+      "status": "doing",
+      "due": "2026-11-25",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-7",
+      "title": "DBMS Phase 2 submission",
+      "project": "College",
+      "priority": "High",
+      "status": "todo",
+      "due": "2026-12-02",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    },
+    {
+      "id": "t-8",
+      "title": "Prepare demo video",
+      "project": "Hackathon",
+      "priority": "Medium",
+      "status": "todo",
+      "due": "2026-11-19",
+      "created_at": "2026-11-14T00:03:22.487Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "p-1",
+      "name": "Hackathon"
+    },
+    {
+      "id": "p-2",
+      "name": "Open Source"
+    },
+    {
+      "id": "p-3",
+      "name": "Learning"
+    },
+    {
+      "id": "p-4",
+      "name": "College"
+    },
+    {
+      "id": "p-5",
+      "name": "Internships"
+    },
+    {
+      "id": "p-6",
+      "name": "Research"
+    }
+  ],
+  "proposals": [
+    {
+      "id": "prop-mwfna56r-jctzj",
+      "title": "Create a checklist for submission",
+      "source": "Chrome Extension",
+      "url": "",
+      "summary": "",
+      "status": "approved",
+      "tasks": [
+        {
+          "id": "p-task-mwfna56b-0nql",
+          "title": "Review event / page guidelines and criteria",
+          "priority": "High",
+          "due": "2026-11-16",
+          "project": "General",
+          "actionType": "create_task",
+          "targetTaskId": null
+        },
+        {
+          "id": "p-task-mwfna56b-wcis",
+          "title": "Complete registration or initial setup checklist",
+          "priority": "High",
+          "due": "2026-11-17",
+          "project": "General",
+          "actionType": "create_task",
+          "targetTaskId": null
+        },
+        {
+          "id": "p-task-mwfna56b-rs5k",
+          "title": "Execute primary deliverables before deadline",
+          "priority": "Medium",
+          "due": "2026-11-19",
+          "project": "General",
+          "actionType": "create_task",
+          "targetTaskId": null
+        },
+        {
+          "id": "p-task-mwfna56b-ovov",
+          "title": "Finalize submission artifacts and record status",
+          "priority": "Low",
+          "due": "2026-11-21",
+          "project": "General",
+          "actionType": "create_task",
+          "targetTaskId": null
+        }
+      ],
+      "created_at": "2026-11-14T00:05:41.955Z",
+      "created": 1794614741955,
+      "decided_at": "2026-11-14T00:05:54.363Z",
+      "execution_result": {
+        "executed": true,
+        "tasksCreated": 4
+      },
+      "updated_at": "2026-11-14T00:05:54.369Z"
+    },
+    {
+      "id": "prop-mwfn8amv-ta83i",
+      "title": "GitHub",
+      "source": "Chrome Extension",
+      "url": "",
+      "summary": "",
+      "status": "approved",
+      "tasks": [
+        {
+          "title": "Read project README and architecture overview",
+          "priority": "High",
+          "due": "2026-11-16",
+          "project": "Open Source",
+          "actionType": "create_task"
+        },
+        {
+          "title": "Set up local development environment and run tests",
+          "priority": "High",
+          "due": "2026-11-17",
+          "project": "Open Source",
+          "actionType": "create_task"
+        },
+        {
+          "title": "Explore open issues to find beginner-friendly tasks",
+          "priority": "Medium",
+          "due": "2026-11-19",
+          "project": "Open Source",
+          "actionType": "create_task"
+        },
+        {
+          "title": "Create contribution branch and prepare pull request",
+          "priority": "Low",
+          "due": "2026-11-21",
+          "project": "Open Source",
+          "actionType": "create_task"
+        }
+      ],
+      "created_at": "2026-11-14T00:04:15.703Z",
+      "created": 1794614655703,
+      "decided_at": "2026-11-14T00:05:57.967Z",
+      "execution_result": {
+        "executed": true,
+        "tasksCreated": 4
+      },
+      "updated_at": "2026-11-14T00:05:57.972Z"
+    },
+    {
+      "id": "prop-1",
+      "title": "Analyze HackOWASP hackathon page",
+      "source": "Agent Studio",
+      "status": "rejected",
+      "created_at": "2026-11-13T23:03:22.487Z",
+      "tasks": [
+        {
+          "id": "p-task-1",
+          "title": "Register team for HackOWASP",
+          "priority": "High",
+          "due": "2026-11-17",
+          "project": "Hackathon",
+          "actionType": "create_task"
+        },
+        {
+          "id": "p-task-2",
+          "title": "Draft problem statement",
+          "priority": "Medium",
+          "due": "2026-11-21",
+          "project": "Hackathon",
+          "actionType": "create_task"
+        }
+      ],
+      "decided_at": "2026-11-14T00:05:56.272Z",
+      "execution_result": {
+        "executed": false,
+        "reason": "Proposal rejected by user"
+      },
+      "updated_at": "2026-11-14T00:05:56.276Z"
+    }
+  ],
+  "agent_runs": [
+    {
+      "id": "run-mwfna56b-zyxyy",
+      "command": "Create a checklist for submission",
+      "status": "planned",
+      "raw_input": "Create a checklist for submission",
+      "output_summary": "Structured action plan for: \"Create a checklist for submission\"",
+      "proposal_id": null,
+      "created_at": "2026-11-14T00:05:41.939Z"
+    },
+    {
+      "id": "run-mwfn8amb-xly1d",
+      "command": "Extract actionable tasks and deadlines for General Informational: GitHub",
+      "status": "planned",
+      "raw_input": "Extract actionable tasks and deadlines for General Informational: GitHub (URL: https://github.com/)",
+      "output_summary": "Open source repository contribution action plan",
+      "proposal_id": null,
+      "created_at": "2026-11-14T00:04:15.684Z"
+    }
+  ],
+  "activity_logs": [
+    {
+      "id": "act-mwfnahjw-mlk5o",
+      "type": "Approval",
+      "title": "Approved: GitHub",
+      "detail": "4 tasks created in My Space",
+      "source": "Approvals",
+      "status": "Completed",
+      "timestamp": "2026-11-14T00:05:57.980Z",
+      "at": 1794614757980
+    },
+    {
+      "id": "act-mwfnag8s-iwczn",
+      "type": "Approval",
+      "title": "Rejected: Analyze HackOWASP hackathon page",
+      "detail": "No tasks created",
+      "source": "Approvals",
+      "status": "Rejected",
+      "timestamp": "2026-11-14T00:05:56.284Z",
+      "at": 1794614756284
+    },
+    {
+      "id": "act-mwfnaert-7a6pf",
+      "type": "Approval",
+      "title": "Approved: Create a checklist for submission",
+      "detail": "4 tasks created in My Space",
+      "source": "Approvals",
+      "status": "Completed",
+      "timestamp": "2026-11-14T00:05:54.377Z",
+      "at": 1794614754377
+    },
+    {
+      "id": "act-mwfna574-exapl",
+      "type": "Plan",
+      "title": "AI Plan drafted: Create a checklist for submission",
+      "detail": "4 proposed actions awaiting approval",
+      "source": "Chrome Extension",
+      "status": "Pending",
+      "timestamp": "2026-11-14T00:05:41.968Z",
+      "at": 1794614741968
+    },
+    {
+      "id": "act-mwfn93x7-fxqgh",
+      "type": "Task",
+      "title": "Task created: eat snacks",
+      "detail": "General · due 2026-11-17",
+      "source": "https://github.com/",
+      "status": "Completed",
+      "timestamp": "2026-11-14T00:04:53.659Z",
+      "at": 1794614693659
+    },
+    {
+      "id": "act-mwfn8an6-5a4wq",
+      "type": "Plan",
+      "title": "AI Plan drafted: GitHub",
+      "detail": "4 proposed actions awaiting approval",
+      "source": "Chrome Extension",
+      "status": "Pending",
+      "timestamp": "2026-11-14T00:04:15.714Z",
+      "at": 1794614655714
+    },
+    {
+      "id": "act-1",
+      "timestamp": "2026-11-13T22:03:22.487Z",
+      "type": "Plan",
+      "title": "Analyzed webpage",
+      "detail": "Extracted deadlines and requirements",
+      "source": "Agent Studio",
+      "status": "Completed"
+    }
+  ],
+  "settings": {
+    "name": "Riya",
+    "email": "riya@example.com",
+    "role": "Student Developer",
+    "weekStart": "Mon",
+    "notify": true,
+    "demo": false
+  }
+}

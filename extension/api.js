@@ -1,15 +1,14 @@
 /**
- * SaarthiFlow Chrome Extension - API & Orchestration Layer
- * Handles Mode A (Local Deterministic Demo) and Mode B (Live Backend Integration).
- * Never calls Activepieces directly; routes strictly through SaarthiFlow Backend.
+ * SaarthiFlow Chrome Extension - API & Agentic Orchestration Layer
+ * Connects the Chrome Extension to the SaarthiFlow Backend, Gemini Agent,
+ * and Human-in-the-Loop Approval workflow.
  */
 
 (function (root) {
   'use strict';
 
-  const uid = () => 'sf-' + Math.random().toString(36).slice(2, 9);
+  const uid = (prefix = 'sf') => `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 
-  // Helper to format Date as YYYY-MM-DD
   function toISODate(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -17,21 +16,18 @@
     return `${y}-${m}-${d}`;
   }
 
-  // Add days to current date
   function addDays(days) {
     const d = new Date();
     d.setDate(d.getDate() + days);
     return toISODate(d);
   }
 
-  // Attempt to parse string into YYYY-MM-DD
   function parseDateString(str) {
     if (!str) return null;
     const clean = str.replace(/(?:st|nd|rd|th)/gi, '').trim();
     const parsed = Date.parse(clean);
     if (!isNaN(parsed)) {
       const dt = new Date(parsed);
-      // Guard against nonsensical dates
       if (dt.getFullYear() >= 2024 && dt.getFullYear() <= 2035) {
         return toISODate(dt);
       }
@@ -41,7 +37,44 @@
 
   const SF_API = {
     /**
-     * Check backend connectivity
+     * Resolves the active backend URL by checking the configured URL first,
+     * then probing common SaarthiFlow ports (3001, 3000).
+     */
+    async resolveBackendUrl(preferredUrl) {
+      const normalizedPreferred = root.SF_CONFIG.normalizeUrl(preferredUrl || root.SF_CONFIG.DEFAULTS.backendUrl);
+      const candidates = [
+        normalizedPreferred,
+        'http://localhost:3001',
+        'http://localhost:3000',
+        'http://127.0.0.1:3001',
+        'http://127.0.0.1:3000'
+      ];
+
+      const unique = [...new Set(candidates.map(u => root.SF_CONFIG.normalizeUrl(u)))];
+
+      for (const candidate of unique) {
+        try {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 1200);
+          const res = await fetch(`${candidate}/api/health`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            signal: controller.signal
+          });
+          clearTimeout(tid);
+          if (res.ok) {
+            return candidate;
+          }
+        } catch {
+          // Probe next candidate
+        }
+      }
+
+      return normalizedPreferred;
+    },
+
+    /**
+     * Check backend connectivity & services health
      */
     async checkHealth(settings) {
       if (settings.mode === 'demo') {
@@ -49,14 +82,14 @@
           ok: true,
           mode: 'demo',
           status: 200,
-          message: 'Local Demo Mode Active (No backend server required)'
+          message: 'Local Demo Mode Active (Offline testing, no backend required)'
         };
       }
 
-      const backendUrl = settings.backendUrl;
-      const endpoint = `${backendUrl}${root.SF_CONFIG.ENDPOINTS.health}`;
+      const activeUrl = await this.resolveBackendUrl(settings.backendUrl);
+      const endpoint = `${activeUrl}${root.SF_CONFIG.ENDPOINTS.health}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
 
       try {
         const response = await fetch(endpoint, {
@@ -74,20 +107,25 @@
         }
 
         if (response.ok) {
+          // If we discovered an alternate working port, update stored settings silently
+          if (activeUrl !== settings.backendUrl && root.SF_CONFIG.saveSettings) {
+            root.SF_CONFIG.saveSettings({ backendUrl: activeUrl }).catch(() => {});
+          }
+
           return {
             ok: true,
             mode: 'live',
             status: response.status,
+            activeUrl: activeUrl,
             data: data,
-            message: 'Connected to SaarthiFlow Backend'
+            message: `Connected to SaarthiFlow Backend at ${activeUrl} (${data.database || 'Database OK'})`
           };
         } else {
           return {
             ok: false,
             mode: 'live',
             status: response.status,
-            error: `Backend responded with HTTP ${response.status}`,
-            data
+            error: `Backend error (HTTP ${response.status})`
           };
         }
       } catch (err) {
@@ -97,50 +135,96 @@
           ok: false,
           mode: 'live',
           error: isAbort
-            ? `Connection to backend timed out (URL: ${backendUrl})`
-            : `Backend not connected at ${backendUrl}. Ensure your backend server is running.`
+            ? `Connection to backend timed out (URL: ${activeUrl})`
+            : `Backend not connected at ${activeUrl}. Run 'npm run server' in project root.`
         };
       }
     },
 
     /**
-     * Analyze webpage content:
-     * - In Demo Mode: Deterministic local parsing & heuristic proposal generation.
-     * - In Live Mode: Calls configured SaarthiFlow backend endpoint.
+     * PRIMARY AGENTIC FLOW: Turn This Page Into Actions
+     * DISCOVER & UNDERSTAND → PLAN
      */
-    async analyzeWebpage(pageData, settings) {
+    async planPageActions(pageData, settings) {
+      // Record capture into recent history
+      await this.recordRecentCapture(pageData);
+
       if (settings.mode === 'demo') {
-        return this._demoAnalyze(pageData);
+        return this._demoPlanPageActions(pageData);
       } else {
-        return this._liveAnalyze(pageData, settings);
+        return this._livePlanPageActions(pageData, settings);
       }
     },
 
     /**
-     * Submit selected tasks for human-in-the-loop approval:
-     * - In Demo Mode: Saves to chrome.storage.local with demo attribution.
-     * - In Live Mode: Sends to backend endpoint /api/proposals.
+     * HUMAN-IN-THE-LOOP APPROVAL SUBMISSION
+     * PLAN → APPROVE
      */
-    async submitProposal(proposalData, settings) {
+    async submitProposalForApproval(proposalData, settings) {
       if (settings.mode === 'demo') {
-        return this._demoSubmit(proposalData);
+        return this._demoSubmitProposal(proposalData);
       } else {
-        return this._liveSubmit(proposalData, settings);
+        return this._liveSubmitProposal(proposalData, settings);
+      }
+    },
+
+    /**
+     * QUICK TASK CREATION: Create a manual task directly
+     */
+    async createQuickTask(taskData, settings) {
+      if (settings.mode === 'demo') {
+        return {
+          success: true,
+          mode: 'demo',
+          task: { ...taskData, id: uid('task') },
+          message: 'Quick Task saved locally (Demo Mode)'
+        };
+      }
+
+      const activeUrl = await this.resolveBackendUrl(settings.backendUrl);
+      const endpoint = `${activeUrl}${root.SF_CONFIG.ENDPOINTS.tasks}`;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      try {
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(taskData),
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Failed to create task (HTTP ${response.status}): ${errText}`);
+        }
+
+        const created = await response.json();
+        return {
+          success: true,
+          mode: 'live',
+          task: created,
+          message: 'Task created successfully in SaarthiFlow My Space!'
+        };
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw new Error(`Unable to create task on backend (${activeUrl}): ${err.message}. Ensure backend is running.`);
       }
     },
 
     // -------------------------------------------------------------
-    // MODE A: LOCAL DETERMINISTIC DEMO ENGINE
+    // MODE A: LOCAL DETERMINISTIC DEMO PLANNER
     // -------------------------------------------------------------
-    _demoAnalyze(pageData) {
-      const text = pageData.extractedText || '';
-      const textLower = text.toLowerCase();
-      const title = pageData.title || 'Untitled Page';
-      const domain = pageData.domain || '';
+    _demoPlanPageActions(pageData) {
+      const opp = pageData.opportunity || {};
       const dates = pageData.dates || [];
-      const headings = pageData.headings || [];
+      const title = opp.opportunityTitle || pageData.title || 'Webpage';
 
-      // Detect nearest deadline date
+      // Determine best due date from detected deadlines
       let nearestDueDate = null;
       for (const d of dates) {
         const parsed = parseDateString(d.text);
@@ -150,227 +234,275 @@
         }
       }
 
-      // Domain and content category heuristics
-      const isHackathon = /hackathon|devpost|unstop|hack|competition|challenge|prize|submission/i.test(title + ' ' + textLower + ' ' + domain);
-      const isJob = /internship|careers|job|hiring|role|full-time|responsibilities|apply now/i.test(title + ' ' + textLower);
-      const isCourse = /assignment|homework|syllabus|lecture|quiz|course|exam|university|college|semester/i.test(title + ' ' + textLower);
-      const isDoc = /documentation|guide|tutorial|api reference|docs|getting started/i.test(title + ' ' + textLower);
+      // CASE: Non-Actionable Page (e.g., google.com, github.com home, generic blogs)
+      if (!opp.isActionable || opp.pageType === 'general') {
+        return {
+          success: true,
+          mode: 'demo',
+          isDemo: true,
+          isActionable: false,
+          categoryName: 'General Informational',
+          categoryIcon: '🌐',
+          opportunity: opp,
+          message: 'No clear actionable opportunity detected on this page.',
+          summary: 'This webpage does not appear to contain an actionable hackathon, job listing, workshop, or repository. You can create a task manually or save this page for reference.',
+          tasks: []
+        };
+      }
 
-      let category = 'General';
-      let summary = '';
+      // Actionable Opportunities
       const tasks = [];
-      const deadlines = [];
-      const requirements = [];
+      let summary = '';
 
-      // Add detected dates to deadlines list
-      dates.forEach(d => {
-        deadlines.push(`${d.label}: ${d.text}`);
-      });
-
-      if (isHackathon) {
-        category = 'Hackathon';
-        summary = `Detected hackathon & competition page on ${domain}. Identified registration guidelines, project submission timeline, and team rules.`;
-        
-        tasks.push({
-          id: uid(),
-          title: `Register team for ${title.split(/[-–|]/)[0].trim() || 'Hackathon'}`,
-          description: `Complete team registration and read competition rules on ${domain}`,
-          priority: 'High',
-          due: nearestDueDate || addDays(3),
-          project: 'Hackathon',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Draft problem statement & feature roadmap',
-          description: 'Brainstorm core user personas, tech stack requirements, and MVP scope',
-          priority: 'High',
-          due: addDays(5),
-          project: 'Hackathon',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Build core prototype and integration flows',
-          description: 'Implement core functionality and verify key user journeys',
-          priority: 'Medium',
-          due: addDays(8),
-          project: 'Hackathon',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Prepare demo video, README, and final submission',
-          description: 'Record demonstration walkthrough and finalize project submission links',
-          priority: 'Medium',
-          due: nearestDueDate || addDays(10),
-          project: 'Hackathon',
-          selected: false
-        });
-
-        requirements.push('Review team size and eligibility criteria');
-        requirements.push('Verify working GitHub repository & presentation requirements');
-
-      } else if (isJob) {
-        category = 'Internships';
-        summary = `Detected career/internship opportunity on ${domain}. Extracted job requirements and application guidelines.`;
-
-        tasks.push({
-          id: uid(),
-          title: `Tailor resume & portfolio for ${title.split(/[-–|]/)[0].trim()}`,
-          description: `Align project highlights with requirements listed on ${domain}`,
-          priority: 'High',
-          due: addDays(2),
-          project: 'Internships',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Submit job application & track status',
-          description: 'Fill in application form and record submission details in tracker',
-          priority: 'High',
-          due: nearestDueDate || addDays(4),
-          project: 'Internships',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Prepare technical interview notes & system questions',
-          description: 'Study relevant tech stacks and practice domain problem solving',
-          priority: 'Medium',
-          due: addDays(7),
-          project: 'Internships',
-          selected: false
-        });
-
-        requirements.push('Update GitHub projects and portfolio links');
-        requirements.push('Prepare concise answers for role-specific questions');
-
-      } else if (isCourse) {
-        category = 'College';
-        summary = `Detected coursework or academic assignment on ${domain}. Extracted assignment scope and submission milestones.`;
-
-        tasks.push({
-          id: uid(),
-          title: `Read assignment brief & rubric for ${title.split(/[-–|]/)[0].trim()}`,
-          description: 'Understand scoring criteria, required tools, and deliverable format',
-          priority: 'High',
-          due: addDays(2),
-          project: 'College',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Complete assignment implementation & test cases',
-          description: 'Execute deliverables and verify all rubric items are addressed',
-          priority: 'High',
-          due: nearestDueDate || addDays(6),
-          project: 'College',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Run plagiarism/format checks and submit on portal',
-          description: 'Package submission files and upload before deadline',
-          priority: 'Medium',
-          due: nearestDueDate || addDays(7),
-          project: 'College',
-          selected: true
-        });
-
-        requirements.push('Adhere to academic integrity and submission guidelines');
-
-      } else if (isDoc) {
-        category = 'Learning';
-        summary = `Detected technical documentation or tutorial on ${domain}. Extracted key implementation topics and architecture notes.`;
-
-        tasks.push({
-          id: uid(),
-          title: `Study docs: ${title.split(/[-–|]/)[0].trim()}`,
-          description: `Read technical reference and API patterns on ${domain}`,
-          priority: 'Medium',
-          due: addDays(3),
-          project: 'Learning',
-          selected: true
-        });
-
-        tasks.push({
-          id: uid(),
-          title: 'Build proof-of-concept prototype following documentation',
-          description: 'Test code snippets and verify integration locally',
-          priority: 'Medium',
-          due: addDays(6),
-          project: 'Learning',
-          selected: true
-        });
-
-        requirements.push('Review prerequisites and environment setup instructions');
-
-      } else {
-        // Generic page parsing with heading-derived tasks
-        category = 'General';
-        const metaDesc = pageData.metaDescription ? ` ${pageData.metaDescription}` : '';
-        summary = `Extracted content from ${domain}.${metaDesc || ' Page analyzed for actionable tasks and key milestones.'}`;
-
-        // Create tasks based on top headings if available
-        if (headings.length > 0) {
-          const topHeadings = headings.slice(0, 3);
-          topHeadings.forEach((h, idx) => {
-            tasks.push({
-              id: uid(),
-              title: `Action: ${h.text}`,
-              description: `Follow up on items outlined in "${h.text}" on ${domain}`,
-              priority: idx === 0 ? 'High' : 'Medium',
-              due: addDays(3 + idx * 2),
-              project: 'General',
-              selected: true
-            });
-          });
-        } else {
+      switch (opp.pageType) {
+        case 'hackathon':
+          summary = `Action plan for Hackathon "${title}". Extracted key deadlines, team requirements, and project submission criteria.`;
           tasks.push({
-            id: uid(),
-            title: `Review and process: ${title.slice(0, 50)}`,
-            description: `Review extracted items from ${domain}`,
+            id: uid('t'),
+            title: `Review eligibility criteria & team guidelines for ${title}`,
+            description: `Check team size, constraints, and eligibility on ${pageData.domain}`,
+            priority: 'High',
+            due: addDays(2),
+            project: 'Hackathon',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Complete registration & confirm team members`,
+            description: `Sign up on portal before deadline (${opp.primaryDeadline})`,
+            priority: 'High',
+            due: nearestDueDate || addDays(4),
+            project: 'Hackathon',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Draft problem statement & MVP feature roadmap`,
+            description: `Brainstorm user journey, tech stack, and deliverables`,
+            priority: 'High',
+            due: addDays(6),
+            project: 'Hackathon',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Build core prototype & public GitHub repository`,
+            description: `Develop MVP and push clean codebase with documentation`,
+            priority: 'Medium',
+            due: addDays(9),
+            project: 'Hackathon',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Record 2-min demo walkthrough & submit before deadline`,
+            description: `Finalize video, presentation slides, and submit on portal`,
+            priority: 'Medium',
+            due: nearestDueDate || addDays(11),
+            project: 'Hackathon',
+            selected: false
+          });
+          break;
+
+        case 'internship':
+        case 'job':
+          summary = `Application readiness plan for ${opp.categoryName}: "${title}". Extracted job requirements, resume checkpoints, and application milestones.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Review role requirements & qualifications for ${title}`,
+            description: `Verify technical prerequisites on ${pageData.domain}`,
+            priority: 'High',
+            due: addDays(2),
+            project: 'Internships',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Tailor resume & portfolio for ${title}`,
+            description: `Highlight relevant projects, skills, and metrics matching role`,
+            priority: 'High',
+            due: addDays(3),
+            project: 'Internships',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Submit application on careers portal`,
+            description: `Complete application form before deadline (${opp.primaryDeadline})`,
+            priority: 'High',
+            due: nearestDueDate || addDays(5),
+            project: 'Internships',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Prepare technical & domain interview notes`,
+            description: `Practice core system, data structures, and role-specific concepts`,
+            priority: 'Medium',
+            due: addDays(8),
+            project: 'Internships',
+            selected: false
+          });
+          break;
+
+        case 'github_repo':
+          summary = `Repository contribution action plan for "${title}". Extracted architecture, setup guidelines, and contribution avenues.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Read README and architecture docs for ${title}`,
+            description: `Understand project goals, tech stack, and module structure`,
+            priority: 'High',
+            due: addDays(2),
+            project: 'Open Source',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Set up local development environment & run tests`,
+            description: `Clone repo, install dependencies, and verify test suite passes`,
+            priority: 'High',
+            due: addDays(4),
+            project: 'Open Source',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Explore open issues & find 'good-first-issue' candidate`,
+            description: `Review discussion threads and identify beginner-friendly tasks`,
+            priority: 'Medium',
+            due: addDays(6),
+            project: 'Open Source',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Implement patch / pull request and link issue`,
+            description: `Follow contribution guidelines and submit PR with description`,
+            priority: 'Medium',
+            due: addDays(9),
+            project: 'Open Source',
+            selected: false
+          });
+          break;
+
+        case 'workshop':
+        case 'event':
+          summary = `Participation plan for ${opp.categoryName}: "${title}". Extracted agenda, schedule, and preparation requirements.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Register for ${title} and verify confirmation`,
+            description: `Reserve seat before registration closes (${opp.primaryDeadline})`,
+            priority: 'High',
+            due: nearestDueDate || addDays(2),
+            project: 'Learning',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Review workshop prerequisites & install required software`,
+            description: `Prepare laptop environment and development tools`,
+            priority: 'Medium',
+            due: addDays(4),
+            project: 'Learning',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Add session dates & times to calendar`,
+            description: `Set reminders for event schedule`,
+            priority: 'Low',
+            due: addDays(3),
+            project: 'Learning',
+            selected: true
+          });
+          break;
+
+        case 'assignment':
+          summary = `Academic coursework completion plan for "${title}". Extracted submission deadlines, rubrics, and deliverable items.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Read assignment brief & scoring rubric for ${title}`,
+            description: `Identify mandatory sections and evaluation criteria`,
+            priority: 'High',
+            due: addDays(2),
+            project: 'College',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Implement core assignment solution & test cases`,
+            description: `Complete deliverables and verify all test requirements`,
+            priority: 'High',
+            due: nearestDueDate || addDays(5),
+            project: 'College',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Perform format check & upload to submission portal`,
+            description: `Submit final artifacts before deadline (${opp.primaryDeadline})`,
+            priority: 'High',
+            due: nearestDueDate || addDays(6),
+            project: 'College',
+            selected: true
+          });
+          break;
+
+        case 'documentation':
+          summary = `Technical exploration plan for "${title}". Extracted reference modules and quickstart tutorials.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Study technical reference & quickstart for ${title}`,
+            description: `Read core API guide on ${pageData.domain}`,
+            priority: 'Medium',
+            due: addDays(3),
+            project: 'Learning',
+            selected: true
+          });
+          tasks.push({
+            id: uid('t'),
+            title: `Build proof-of-concept prototype integrating SDK`,
+            description: `Test sample snippets and verify working API calls`,
+            priority: 'Medium',
+            due: addDays(6),
+            project: 'Learning',
+            selected: true
+          });
+          break;
+
+        default:
+          summary = `Action plan for ${title}.`;
+          tasks.push({
+            id: uid('t'),
+            title: `Review and follow up on ${title.slice(0, 50)}`,
+            description: `Action item extracted from ${pageData.domain}`,
             priority: 'Medium',
             due: nearestDueDate || addDays(4),
             project: 'General',
             selected: true
           });
-        }
+          break;
       }
 
       return {
         success: true,
         mode: 'demo',
         isDemo: true,
-        category: category,
+        isActionable: true,
+        categoryName: opp.categoryName,
+        categoryIcon: opp.categoryIcon,
+        opportunity: opp,
         summary: summary,
-        deadlines: deadlines.length > 0 ? deadlines : ['No explicit deadline detected on page'],
-        requirements: requirements.length > 0 ? requirements : ['No specific prerequisites detected'],
         tasks: tasks,
-        extractedInfo: {
-          title: pageData.title,
-          url: pageData.url,
-          domain: pageData.domain,
-          headingsCount: headings.length,
-          datesCount: dates.length,
-          characterCount: (pageData.extractedText || '').length
-        }
+        proposalId: uid('demo-prop')
       };
     },
 
-    async _demoSubmit(proposalData) {
-      const proposalId = 'demo-prop-' + Date.now().toString(36);
+    async _demoSubmitProposal(proposalData) {
+      const proposalId = proposalData.proposalId || uid('demo-prop');
       const record = {
         id: proposalId,
-        title: proposalData.title || 'Webpage Analysis',
+        title: proposalData.title || 'Action Plan',
         url: proposalData.url || '',
         source: 'Chrome Extension (Demo)',
         created: Date.now(),
@@ -380,7 +512,6 @@
         isDemo: true
       };
 
-      // Store in chrome.storage.local
       await this.saveDemoProposal(record);
 
       return {
@@ -388,30 +519,28 @@
         mode: 'demo',
         isDemo: true,
         proposalId: proposalId,
-        message: 'Saved locally to Chrome Storage — not submitted to SaarthiFlow backend.',
-        proposal: record
+        status: 'Awaiting Approval',
+        message: 'Plan saved locally in Chrome storage (Demo Mode) — not submitted to SaarthiFlow database.'
       };
     },
 
     // -------------------------------------------------------------
-    // MODE B: LIVE BACKEND INTEGRATION ENGINE
+    // MODE B: LIVE SAARTHIFLOW BACKEND & AGENTIC INTEGRATION
     // -------------------------------------------------------------
-    async _liveAnalyze(pageData, settings) {
-      const backendUrl = settings.backendUrl;
-      const endpoint = `${backendUrl}${root.SF_CONFIG.ENDPOINTS.analyze}`;
+    async _livePlanPageActions(pageData, settings) {
+      const activeUrl = await this.resolveBackendUrl(settings.backendUrl);
+      const opp = pageData.opportunity || {};
+
+      const command = `Extract actionable tasks and deadlines for ${opp.categoryName || 'opportunity'}: ${opp.opportunityTitle || pageData.title}`;
+      const endpoint = `${activeUrl}${root.SF_CONFIG.ENDPOINTS.agentPlan}`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), root.SF_CONFIG.LIMITS.REQUEST_TIMEOUT_MS);
 
       const payload = {
-        url: pageData.url,
-        title: pageData.title,
-        domain: pageData.domain,
-        favicon: pageData.favicon,
-        metaDescription: pageData.metaDescription,
-        extractedText: pageData.extractedText,
-        headings: pageData.headings,
-        dates: pageData.dates,
-        links: pageData.links
+        command: command,
+        webpageUrl: pageData.url,
+        webpageText: pageData.extractedText,
+        opportunity: opp
       };
 
       try {
@@ -428,51 +557,88 @@
 
         if (!response.ok) {
           const errText = await response.text();
-          throw new Error(`Backend analysis failed (HTTP ${response.status}): ${errText || response.statusText}`);
+          throw new Error(`Backend planning failed (HTTP ${response.status}): ${errText || response.statusText}`);
         }
 
         const data = await response.json();
 
-        // Support either synchronous task return or async job initiation
-        if (data.jobId && data.status === 'pending') {
-          return {
-            success: true,
-            mode: 'live',
-            asyncJob: true,
-            jobId: data.jobId,
-            message: data.message || 'Analysis in progress on backend'
-          };
-        }
+        const mappedTasks = (data.tasks || []).map((t, idx) => ({
+          id: t.id || uid(`task-${idx}`),
+          title: t.title || 'Untitled Action',
+          description: t.description || `Action derived from ${pageData.domain}`,
+          priority: t.priority || 'Medium',
+          due: t.due || addDays(5),
+          project: t.project || opp.categoryName || 'General',
+          actionType: t.actionType || 'create_task',
+          selected: true
+        }));
 
         return {
           success: true,
           mode: 'live',
           isDemo: false,
-          summary: data.summary || 'Summary generated by SaarthiFlow Agent.',
-          deadlines: data.deadlines || [],
-          requirements: data.requirements || [],
-          tasks: (data.tasks || []).map(t => ({
-            id: t.id || uid(),
-            title: t.title || 'Untitled Task',
-            description: t.description || '',
-            priority: t.priority || 'Medium',
-            due: t.due || addDays(5),
-            project: t.project || 'General',
-            selected: true
-          }))
+          isActionable: mappedTasks.length > 0,
+          categoryName: opp.categoryName || 'Opportunity',
+          categoryIcon: opp.categoryIcon || '🎯',
+          opportunity: opp,
+          summary: data.summary || `AI Action Plan drafted by SaarthiFlow Agent.`,
+          tasks: mappedTasks,
+          proposalId: data.proposalId,
+          runId: data.runId,
+          isSimulated: Boolean(data.isSimulated)
         };
       } catch (err) {
         clearTimeout(timeoutId);
         if (err.name === 'AbortError') {
-          throw new Error(`Request timed out after ${root.SF_CONFIG.LIMITS.REQUEST_TIMEOUT_MS / 1000}s. Backend might be processing slowly.`);
+          throw new Error(`Request timed out after ${root.SF_CONFIG.LIMITS.REQUEST_TIMEOUT_MS / 1000}s. Backend agent may be processing slowly.`);
         }
-        throw new Error(`Backend not connected at ${backendUrl}. ${err.message || 'Check server connection.'}`);
+        throw new Error(`Backend not connected at ${activeUrl}. ${err.message || 'Ensure your server is running (npm run server).'}`);
       }
     },
 
-    async _liveSubmit(proposalData, settings) {
-      const backendUrl = settings.backendUrl;
-      const endpoint = `${backendUrl}${root.SF_CONFIG.ENDPOINTS.proposals}`;
+    async _liveSubmitProposal(proposalData, settings) {
+      const activeUrl = await this.resolveBackendUrl(settings.backendUrl);
+
+      // If a proposalId was already created by /api/agent/plan, update it with user edits
+      if (proposalData.proposalId) {
+        const updateEndpoint = `${activeUrl}${root.SF_CONFIG.ENDPOINTS.approvals}/${proposalData.proposalId}`;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        try {
+          const response = await fetch(updateEndpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({
+              tasks: proposalData.tasks.map(t => ({
+                title: t.title,
+                priority: t.priority,
+                due: t.due,
+                project: t.project,
+                actionType: t.actionType || 'create_task'
+              }))
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            return {
+              success: true,
+              mode: 'live',
+              isDemo: false,
+              proposalId: proposalData.proposalId,
+              status: 'Awaiting Approval',
+              message: 'Plan submitted successfully! Open SaarthiFlow Approvals to review and execute.'
+            };
+          }
+        } catch (e) {
+          console.debug('[SaarthiFlow] PATCH proposal update warning, falling back to POST:', e);
+        }
+      }
+
+      // Fallback or new proposal submission via POST /api/proposals
+      const endpoint = `${activeUrl}${root.SF_CONFIG.ENDPOINTS.proposals}`;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), root.SF_CONFIG.LIMITS.REQUEST_TIMEOUT_MS);
 
@@ -486,7 +652,8 @@
           description: t.description,
           priority: t.priority,
           due: t.due,
-          project: t.project || 'General'
+          project: t.project || 'General',
+          actionType: t.actionType || 'create_task'
         }))
       };
 
@@ -504,7 +671,7 @@
 
         if (!response.ok) {
           const errText = await response.text();
-          throw new Error(`Proposal submission failed (HTTP ${response.status}): ${errText || response.statusText}`);
+          throw new Error(`Proposal submission failed (HTTP ${response.status}): ${errText}`);
         }
 
         const data = await response.json();
@@ -513,26 +680,57 @@
           mode: 'live',
           isDemo: false,
           proposalId: data.proposalId || data.id,
-          message: data.message || 'Plan submitted successfully for approval in SaarthiFlow!'
+          status: 'Awaiting Approval',
+          message: 'Plan created in SaarthiFlow! Awaiting human approval.'
         };
       } catch (err) {
         clearTimeout(timeoutId);
-        if (err.name === 'AbortError') {
-          throw new Error('Submission timed out. Please verify backend status.');
-        }
-        throw new Error(`Failed to submit proposal to backend: ${err.message}`);
+        throw new Error(`Failed to submit proposal to backend (${activeUrl}): ${err.message}. Ensure backend is running.`);
       }
     },
 
     // -------------------------------------------------------------
-    // DEMO PROPOSAL LOCAL STORAGE HELPERS
+    // STORAGE & RECENT CAPTURES
     // -------------------------------------------------------------
+    async recordRecentCapture(pageData) {
+      if (!chrome?.storage?.local) return;
+      try {
+        const key = root.SF_CONFIG.STORAGE_KEYS.RECENT_CAPTURES;
+        chrome.storage.local.get([key], (res) => {
+          const list = res[key] || [];
+          const item = {
+            url: pageData.url,
+            title: pageData.opportunity?.opportunityTitle || pageData.title,
+            category: pageData.opportunity?.categoryName || 'General',
+            categoryIcon: pageData.opportunity?.categoryIcon || '🌐',
+            timestamp: Date.now()
+          };
+
+          const filtered = list.filter(x => x.url !== item.url);
+          filtered.unshift(item);
+          const trimmed = filtered.slice(0, root.SF_CONFIG.LIMITS.MAX_RECENT_CAPTURES);
+
+          const obj = {};
+          obj[key] = trimmed;
+          chrome.storage.local.set(obj);
+        });
+      } catch (e) {
+        console.debug('[SaarthiFlow] Record capture non-fatal:', e);
+      }
+    },
+
+    async getRecentCaptures() {
+      return new Promise((resolve) => {
+        if (!chrome?.storage?.local) return resolve([]);
+        chrome.storage.local.get([root.SF_CONFIG.STORAGE_KEYS.RECENT_CAPTURES], (res) => {
+          resolve(res[root.SF_CONFIG.STORAGE_KEYS.RECENT_CAPTURES] || []);
+        });
+      });
+    },
+
     async getDemoProposals() {
       return new Promise((resolve) => {
-        if (!chrome?.storage?.local) {
-          resolve([]);
-          return;
-        }
+        if (!chrome?.storage?.local) return resolve([]);
         chrome.storage.local.get([root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS], (res) => {
           resolve(res[root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS] || []);
         });
@@ -541,14 +739,10 @@
 
     async saveDemoProposal(proposal) {
       return new Promise((resolve) => {
-        if (!chrome?.storage?.local) {
-          resolve();
-          return;
-        }
+        if (!chrome?.storage?.local) return resolve();
         chrome.storage.local.get([root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS], (res) => {
           const list = res[root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS] || [];
           list.unshift(proposal);
-          // Keep up to max limit
           const trimmed = list.slice(0, root.SF_CONFIG.LIMITS.MAX_SAVED_PROPOSALS);
           const obj = {};
           obj[root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS] = trimmed;
@@ -559,10 +753,7 @@
 
     async clearDemoProposals() {
       return new Promise((resolve) => {
-        if (!chrome?.storage?.local) {
-          resolve();
-          return;
-        }
+        if (!chrome?.storage?.local) return resolve();
         const obj = {};
         obj[root.SF_CONFIG.STORAGE_KEYS.DEMO_PROPOSALS] = [];
         chrome.storage.local.set(obj, () => resolve());

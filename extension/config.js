@@ -15,10 +15,10 @@
 
     // Default Configuration
     DEFAULTS: {
-      mode: 'demo',
-      backendUrl: 'http://localhost:3000',
-      dashboardUrl: 'http://localhost:5173',
-      autoAnalyze: false
+      mode: 'live', // Live Mode is primary; Demo Mode available for offline testing
+      backendUrl: 'http://localhost:3001', // SaarthiFlow Express backend default port
+      dashboardUrl: 'http://localhost:5173', // Vite client default port
+      autoDetectPageType: true
     },
 
     // Chrome Storage Keys
@@ -27,23 +27,28 @@
       LAST_PAGE: 'sf_last_page',
       LAST_ANALYSIS: 'sf_last_analysis',
       DEMO_PROPOSALS: 'sf_demo_proposals',
+      RECENT_CAPTURES: 'sf_recent_captures',
       ACTIVE_JOB: 'sf_active_job'
     },
 
     // Backend API Endpoints Mapping
     ENDPOINTS: {
       health: '/api/health',
-      analyze: '/api/analyze',
-      proposals: '/api/proposals',
-      jobStatus: '/api/jobs' // /api/jobs/:id
+      agentPlan: '/api/agent/plan',     // Primary SaarthiFlow AI Planning & Proposal endpoint
+      analyze: '/api/analyze',           // Structured webpage analysis endpoint
+      proposals: '/api/proposals',       // Proposal submission endpoint
+      approvals: '/api/approvals',       // Approvals query and decision endpoint
+      tasks: '/api/tasks',               // Quick Task direct creation endpoint
+      activity: '/api/activity'          // Activity log endpoint
     },
 
     // Extension Limits & Safeguards
     LIMITS: {
       MAX_EXTRACT_CHARS: 12000,
-      MAX_SUMMARY_PREVIEW_CHARS: 280,
+      MAX_SUMMARY_PREVIEW_CHARS: 240,
       REQUEST_TIMEOUT_MS: 15000,
-      MAX_SAVED_PROPOSALS: 50
+      MAX_SAVED_PROPOSALS: 50,
+      MAX_RECENT_CAPTURES: 15
     },
 
     // Utility: Validate URL format
@@ -81,10 +86,10 @@
 
           const stored = result[SF_CONFIG.STORAGE_KEYS.SETTINGS] || {};
           const merged = {
-            mode: stored.mode === SF_CONFIG.MODES.LIVE ? SF_CONFIG.MODES.LIVE : SF_CONFIG.MODES.DEMO,
+            mode: stored.mode === SF_CONFIG.MODES.DEMO ? SF_CONFIG.MODES.DEMO : SF_CONFIG.MODES.LIVE,
             backendUrl: SF_CONFIG.normalizeUrl(stored.backendUrl || SF_CONFIG.DEFAULTS.backendUrl),
             dashboardUrl: SF_CONFIG.normalizeUrl(stored.dashboardUrl || SF_CONFIG.DEFAULTS.dashboardUrl),
-            autoAnalyze: Boolean(stored.autoAnalyze)
+            autoDetectPageType: stored.autoDetectPageType !== undefined ? Boolean(stored.autoDetectPageType) : true
           };
           resolve(merged);
         });
